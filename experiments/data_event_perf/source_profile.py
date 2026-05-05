@@ -3,7 +3,7 @@
 运行方式（在项目根目录，虚拟环境已激活）：
     python experiments/data_event_perf/source_profile.py [--rows N] [--batch-size N] [--profile]
 
-默认跑 1000w 行，batch_size=200_000，仅打印吞吐。
+默认跑 1000w 行，batch_size=1_000_000，仅打印吞吐。
 加 --profile 时输出 cProfile 热点。
 """
 from __future__ import annotations
@@ -15,11 +15,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
 
-import pandas as pd
-
 from eventar.core.data_loader import ParquetDataLoader
 from eventar.core.data_event_source import DataEventSource
 from eventar.core.event import DataEvent
+from eventar.core.data_loader import DataLoader
 
 DATA_FILE = Path(__file__).resolve().parents[2] / "data" / "test" / "market_df_10000000.parquet"
 COLUMNS = [
@@ -47,8 +46,6 @@ def run(rows: int, batch_size: int) -> tuple[int, float, float]:
 
     if rows > 0:
         # 仅取前 N 行：用 pandas head 限制 loader
-        from eventar.core.data_loader import DataLoader
-
         class LimitedLoader(DataLoader):
             def __init__(self, inner, limit):
                 self._inner = inner
@@ -68,6 +65,7 @@ def run(rows: int, batch_size: int) -> tuple[int, float, float]:
         loader = LimitedLoader(
             ParquetDataLoader(DATA_FILE, batch_size=batch_size, columns=COLUMNS), rows
         )
+        # loader = ParquetDataLoader(DATA_FILE, batch_size=batch_size, columns=COLUMNS)
         source = DataEventSource(loader, COLUMNS, MarketEvent)
 
     count = 0
@@ -83,7 +81,7 @@ def run(rows: int, batch_size: int) -> tuple[int, float, float]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="DataEventSource throughput & profile")
     parser.add_argument("--rows", type=int, default=-1, help="限制行数，-1 表示全部")
-    parser.add_argument("--batch-size", type=int, default=200_000)
+    parser.add_argument("--batch-size", type=int, default=1_000_000)
     parser.add_argument("--profile", action="store_true", help="输出 cProfile 报告")
     parser.add_argument("--profile-top", type=int, default=20)
     args = parser.parse_args()
