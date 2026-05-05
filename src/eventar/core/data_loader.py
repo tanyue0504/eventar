@@ -24,17 +24,14 @@ class DataLoader(ABC):
     - __next__ 返回下一个 DataFrame 分块；无数据时抛出 StopIteration。
     子类必须实现 __next__。
     """
-
+    
     def __iter__(self) -> Iterator[pd.DataFrame]:
+        """返回自身，使加载器可直接用于 for 循环。"""
         return self
 
-    @abstractmethod
     def __next__(self) -> pd.DataFrame:
-        """返回下一个 DataFrame 分块。无更多数据时抛出 StopIteration。"""
-
-    def close(self) -> None:
-        """释放底层资源。子类可覆盖。"""
-
+        """返回下一个 DataFrame 分块；无数据时抛出 StopIteration。"""
+        raise StopIteration
 
 class CsvDataLoader(DataLoader):
     """流式 CSV 加载器。
@@ -60,33 +57,13 @@ class CsvDataLoader(DataLoader):
         self._path = Path(path)
         self._chunksize = chunksize
         self._read_csv_kwargs = read_csv_kwargs
-        self._reader: pd.io.parsers.readers.TextFileReader | None = None
 
     def __iter__(self) -> Iterator[pd.DataFrame]:
-        # 每次迭代重新打开文件，确保可重复使用
-        self.close()
-        self._reader = pd.read_csv(
+        yield from pd.read_csv(
             self._path,
             chunksize=self._chunksize,
             **self._read_csv_kwargs,
         )
-        return self
-
-    def __next__(self) -> pd.DataFrame:
-        if self._reader is None:
-            raise StopIteration
-        try:
-            return next(self._reader)
-        except StopIteration:
-            self.close()
-            raise
-
-    def close(self) -> None:
-        """关闭底层文件句柄。"""
-        if self._reader is not None:
-            self._reader.close()
-            self._reader = None
-
 
 class ParquetDataLoader(DataLoader):
     """流式 Parquet 加载器。
@@ -117,26 +94,8 @@ class ParquetDataLoader(DataLoader):
         self._batches = None
 
     def __iter__(self) -> Iterator[pd.DataFrame]:
-        self.close()
-        self._file = pq.ParquetFile(self._path)
-        self._batches = self._file.iter_batches(
+        for batch in pq.ParquetFile(self._path).iter_batches(
             batch_size=self._batch_size,
             columns=self._columns,
-        )
-        return self
-
-    def __next__(self) -> pd.DataFrame:
-        if self._batches is None:
-            raise StopIteration
-        try:
-            batch = next(self._batches)
-            return batch.to_pandas()
-        except StopIteration:
-            self.close()
-            raise
-
-    def close(self) -> None:
-        """关闭底层 Parquet 文件句柄。"""
-        self._batches = None
-        if self._file is not None:
-            self._file = None
+        ):
+            yield batch.to_pandas()

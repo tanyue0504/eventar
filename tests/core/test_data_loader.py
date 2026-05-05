@@ -1,9 +1,9 @@
 """data_loader 模块测试。
 
 覆盖场景：
-- DataLoader 抽象基类的 ABC 约束
-- CsvDataLoader：分块迭代、全量收集、close、可重复迭代、透传 kwargs
-- ParquetDataLoader：分块迭代、全量收集、close、可重复迭代、columns 过滤
+- DataLoader 可迭代契约（行为导向，不约束必须实现 __next__）
+- CsvDataLoader：分块迭代、全量收集、可重复迭代、透传 kwargs
+- ParquetDataLoader：分块迭代、全量收集、可重复迭代、columns 过滤
 """
 from __future__ import annotations
 
@@ -48,38 +48,16 @@ def parquet_file(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# DataLoader 抽象基类
+# DataLoader 可迭代契约
 # ---------------------------------------------------------------------------
 
 
-def test_data_loader_is_abstract():
-    """DataLoader 不能直接实例化。"""
-    with pytest.raises(TypeError):
-        DataLoader()  # type: ignore[abstract]
-
-
-def test_data_loader_subclass_must_implement_next():
-    """未实现 __next__ 的子类也不能实例化。"""
-
-    class Incomplete(DataLoader):
-        pass
-
-    with pytest.raises(TypeError):
-        Incomplete()  # type: ignore[abstract]
-
-
-def test_data_loader_concrete_subclass():
-    """实现了 __next__ 的具体子类可正常实例化并被迭代。"""
+def test_data_loader_generator_subclass_iterable():
+    """只实现生成器式 __iter__ 的子类也应可正常迭代。"""
 
     class SingleChunk(DataLoader):
-        def __init__(self):
-            self._done = False
-
-        def __next__(self) -> pd.DataFrame:
-            if self._done:
-                raise StopIteration
-            self._done = True
-            return pd.DataFrame({"x": [1, 2, 3]})
+        def __iter__(self):
+            yield pd.DataFrame({"x": [1, 2, 3]})
 
     loader = SingleChunk()
     chunks = list(loader)
@@ -122,16 +100,6 @@ def test_csv_loader_repeatable(csv_file):
     first = pd.concat(list(loader), ignore_index=True)
     second = pd.concat(list(loader), ignore_index=True)
     pd.testing.assert_frame_equal(first, second)
-
-
-def test_csv_loader_close_before_exhaustion(csv_file):
-    """提前 close 后，重新迭代应仍能正常返回数据。"""
-    loader = CsvDataLoader(csv_file, chunksize=2)
-    it = iter(loader)
-    next(it)  # 只读一块
-    loader.close()  # 提前关闭
-    result = pd.concat(list(loader), ignore_index=True)
-    assert len(result) == 5
 
 
 def test_csv_loader_passthrough_kwargs(csv_file):
@@ -181,16 +149,6 @@ def test_parquet_loader_columns(parquet_file):
     loader = ParquetDataLoader(parquet_file, batch_size=10_000, columns=["value"])
     chunk = next(iter(loader))
     assert list(chunk.columns) == ["value"]
-
-
-def test_parquet_loader_close_before_exhaustion(parquet_file):
-    """提前 close 后，重新迭代应仍能正常返回数据。"""
-    loader = ParquetDataLoader(parquet_file, batch_size=2)
-    it = iter(loader)
-    next(it)
-    loader.close()
-    result = pd.concat(list(loader), ignore_index=True)
-    assert len(result) == 5
 
 
 if __name__ == "__main__":
