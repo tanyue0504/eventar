@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from eventar.core.component import Component
-from eventar.core.engine import EventEngine
+from eventar.kernel.component import Component
+from eventar.kernel.engine import EventEngine
 
 
 # ---------------------------------------------------------------------------

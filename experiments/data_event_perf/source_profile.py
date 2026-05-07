@@ -15,10 +15,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
 
-from eventar.core.data_loader import ParquetDataLoader
-from eventar.core.data_event_source import DataEventSource
-from eventar.core.event import DataEvent
-from eventar.core.data_loader import DataLoader
+from eventar.adapters.data.parquet_loader import ParquetDataLoader
+from eventar.adapters.data.single_source import SingleDataEventSource
+from eventar.data.event import DataEvent
+from eventar.data.loader import DataLoader
 
 DATA_FILE = Path(__file__).resolve().parents[2] / "data" / "test" / "market_df_10000000.parquet"
 COLUMNS = [
@@ -42,7 +42,7 @@ class MarketEvent(DataEvent):
 def run(rows: int, batch_size: int) -> tuple[int, float, float]:
     """遍历全部数据，返回 (行数, 耗时秒, checksum)。"""
     loader = ParquetDataLoader(DATA_FILE, batch_size=batch_size, columns=COLUMNS)
-    source = DataEventSource(loader, COLUMNS, MarketEvent)
+    source = SingleDataEventSource(loader, COLUMNS, MarketEvent)
 
     if rows > 0:
         # 仅取前 N 行：用 pandas head 限制 loader
@@ -66,7 +66,7 @@ def run(rows: int, batch_size: int) -> tuple[int, float, float]:
             ParquetDataLoader(DATA_FILE, batch_size=batch_size, columns=COLUMNS), rows
         )
         # loader = ParquetDataLoader(DATA_FILE, batch_size=batch_size, columns=COLUMNS)
-        source = DataEventSource(loader, COLUMNS, MarketEvent)
+        source = SingleDataEventSource(loader, COLUMNS, MarketEvent)
 
     count = 0
     checksum = 0.0

@@ -16,11 +16,11 @@ from typing import Iterator
 
 import pytest
 
-from eventar.core.backtest_engine import BacktestEngine
-from eventar.core.component import Component
-from eventar.core.data_event_source import DataEventSource
-from eventar.core.engine import EventEngine
-from eventar.core.event import DataEvent
+from eventar.backtest.engine import BacktestEngine
+from eventar.kernel.component import Component
+from eventar.data.source import DataEventSource
+from eventar.kernel.engine import EventEngine
+from eventar.data.event import DataEvent
 
 
 # ---------------------------------------------------------------------------

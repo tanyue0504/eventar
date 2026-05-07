@@ -1,21 +1,21 @@
-"""针对 src/eventar/core/engine.py 的单元测试。"""
+"""针对 src/eventar/kernel/engine.py 的单元测试。"""
 from __future__ import annotations
 
 import dataclasses
 
 import pytest
 
-from eventar.core.engine import EventEngine
-from eventar.core.event import Event, LogicEvent
+from eventar.kernel.engine import EventEngine
+from eventar.kernel.event import Event
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class PingEvent(LogicEvent):
+class PingEvent(Event):
     seq: int
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class PongEvent(LogicEvent):
+class PongEvent(Event):
     seq: int
 
 
@@ -93,13 +93,13 @@ def test_type_routing_is_exact_not_base_class() -> None:
     engine = EventEngine()
     seen: list[str] = []
 
-    def on_logic(event: Event) -> None:
-        seen.append(f"logic:{type(event).__name__}")
+    def on_base(event: Event) -> None:
+        seen.append(f"base:{type(event).__name__}")
 
     def on_ping(event: Event) -> None:
         seen.append(f"ping:{type(event).__name__}")
 
-    engine.register_for(LogicEvent, on_logic)
+    engine.register_for(Event, on_base)
     engine.register_for(PingEvent, on_ping)
 
     engine.push(PingEvent(seq=1))

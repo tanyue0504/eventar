@@ -10,11 +10,9 @@
 
 from collections import deque
 from collections.abc import Callable
-
-from eventar.core.event import Event
+from eventar.kernel.event import Event
 
 EventListener = Callable[[Event], None]
-
 
 class EventEngine:
     """基于 deque 的单线程 FIFO 事件引擎。"""

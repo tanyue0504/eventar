@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from eventar.core.engine import EventEngine
+from eventar.kernel.engine import EventEngine
 
 
 class Component(ABC):

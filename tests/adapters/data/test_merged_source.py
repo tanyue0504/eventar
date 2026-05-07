@@ -18,8 +18,9 @@ from typing import Iterator
 
 import pytest
 
-from eventar.core.data_event_source import DataEventSource, MergedDataEventSource
-from eventar.core.event import DataEvent
+from eventar.data.source import DataEventSource
+from eventar.adapters.data.merged_source import MergedDataEventSource
+from eventar.data.event import DataEvent
 
 
 # ---------------------------------------------------------------------------

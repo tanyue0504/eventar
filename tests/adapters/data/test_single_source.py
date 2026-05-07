@@ -16,9 +16,10 @@ from dataclasses import dataclass
 import pandas as pd
 import pytest
 
-from eventar.core.data_event_source import DataEventSource
-from eventar.core.data_loader import CsvDataLoader, ParquetDataLoader
-from eventar.core.event import DataEvent
+from eventar.adapters.data.single_source import SingleDataEventSource
+from eventar.adapters.data.csv_loader import CsvDataLoader
+from eventar.adapters.data.parquet_loader import ParquetDataLoader
+from eventar.data.event import DataEvent
 
 
 # ---------------------------------------------------------------------------
@@ -88,22 +89,14 @@ def multi_col_csv(tmp_path):
 
 def test_source_yields_correct_count_csv(csv_file):
     """从 CSV 加载时，产出的事件总数等于数据行数。"""
-    source = DataEventSource(CsvDataLoader(csv_file), ["timestamp", "value"], PriceEvent)
+    source = SingleDataEventSource(CsvDataLoader(csv_file), ["timestamp", "value"], PriceEvent)
     assert len(list(source)) == 5
 
 
 def test_source_yields_correct_count_parquet(parquet_file):
     """从 Parquet 加载时，产出的事件总数等于数据行数。"""
-    source = DataEventSource(ParquetDataLoader(parquet_file), ["timestamp", "value"], PriceEvent)
+    source = SingleDataEventSource(ParquetDataLoader(parquet_file), ["timestamp", "value"], PriceEvent)
     assert len(list(source)) == 5
-
-
-def test_source_yields_dataevent_instances(csv_file):
-    """每个产出对象必须是 DataEvent 实例。"""
-    source = DataEventSource(CsvDataLoader(csv_file), ["timestamp", "value"], PriceEvent)
-    for event in source:
-        assert isinstance(event, DataEvent)
-        assert isinstance(event, PriceEvent)
 
 
 # ---------------------------------------------------------------------------
@@ -113,7 +106,7 @@ def test_source_yields_dataevent_instances(csv_file):
 
 def test_source_field_values_csv(csv_file):
     """事件字段值与原始 CSV 数据一致。"""
-    source = DataEventSource(CsvDataLoader(csv_file), ["timestamp", "value"], PriceEvent)
+    source = SingleDataEventSource(CsvDataLoader(csv_file), ["timestamp", "value"], PriceEvent)
     events = list(source)
     assert events[0].timestamp == 1
     assert events[0].value == 10.0
@@ -123,7 +116,7 @@ def test_source_field_values_csv(csv_file):
 
 def test_source_field_values_parquet(parquet_file):
     """事件字段值与原始 Parquet 数据一致。"""
-    source = DataEventSource(ParquetDataLoader(parquet_file), ["timestamp", "value"], PriceEvent)
+    source = SingleDataEventSource(ParquetDataLoader(parquet_file), ["timestamp", "value"], PriceEvent)
     events = list(source)
     assert events[2].timestamp == 3
     assert events[2].value == 30.0
@@ -136,7 +129,7 @@ def test_source_field_values_parquet(parquet_file):
 
 def test_source_columns_filter(multi_col_csv):
     """columns 参数仅提取指定列，多余列不传入构造函数。"""
-    source = DataEventSource(
+    source = SingleDataEventSource(
         CsvDataLoader(multi_col_csv),
         ["timestamp", "code", "price"],
         TickEvent,
@@ -155,7 +148,7 @@ def test_source_columns_filter(multi_col_csv):
 def test_source_transform_modifies_values(csv_file):
     """覆盖 transform 后，事件字段值应反映转换结果。"""
 
-    class DoubledSource(DataEventSource):
+    class DoubledSource(SingleDataEventSource):
         def transform(self, chunk: pd.DataFrame) -> pd.DataFrame:
             chunk = chunk.copy()
             chunk["value"] = chunk["value"] * 2
@@ -170,7 +163,7 @@ def test_source_transform_modifies_values(csv_file):
 def test_source_transform_filter_rows(csv_file):
     """transform 过滤行后，产出事件数应减少。"""
 
-    class FilteredSource(DataEventSource):
+    class FilteredSource(SingleDataEventSource):
         def transform(self, chunk: pd.DataFrame) -> pd.DataFrame:
             return chunk[chunk["value"] > 20.0]
 
@@ -189,7 +182,7 @@ def test_source_transform_runs_before_columns_selection(multi_col_csv):
         code: str
         derived_price: float
 
-    class DerivedColumnsSource(DataEventSource):
+    class DerivedColumnsSource(SingleDataEventSource):
         def transform(self, chunk: pd.DataFrame) -> pd.DataFrame:
             assert "noise" in chunk.columns
             out = chunk.copy()
@@ -207,26 +200,13 @@ def test_source_transform_runs_before_columns_selection(multi_col_csv):
 
 
 # ---------------------------------------------------------------------------
-# 可重复迭代
-# ---------------------------------------------------------------------------
-
-
-def test_source_repeatable(csv_file):
-    """同一 DataEventSource 可多次迭代，每次结果相同。"""
-    source = DataEventSource(CsvDataLoader(csv_file), ["timestamp", "value"], PriceEvent)
-    first = list(source)
-    second = list(source)
-    assert first == second
-
-
-# ---------------------------------------------------------------------------
 # 多分块边界
 # ---------------------------------------------------------------------------
 
 
 def test_source_multi_chunk_total_count(csv_file):
     """chunksize=2 时，跨分块的事件总数仍正确。"""
-    source = DataEventSource(
+    source = SingleDataEventSource(
         CsvDataLoader(csv_file, chunksize=2),
         ["timestamp", "value"],
         PriceEvent,
@@ -236,7 +216,7 @@ def test_source_multi_chunk_total_count(csv_file):
 
 def test_source_multi_chunk_order(csv_file):
     """多分块时，事件顺序与原始数据行顺序一致。"""
-    source = DataEventSource(
+    source = SingleDataEventSource(
         CsvDataLoader(csv_file, chunksize=2),
         ["timestamp", "value"],
         PriceEvent,

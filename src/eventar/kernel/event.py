@@ -10,7 +10,6 @@
 """
 from __future__ import annotations
 
-import dataclasses
 from dataclasses import dataclass
 
 
@@ -80,70 +79,3 @@ class Event:
         # 直接调用 object.__new__(cls) 可绕开此问题。
         _assert_frozen_slots_dataclass(cls)
         return object.__new__(cls)
-
-
-@dataclass(frozen=True, slots=True)
-class DataEvent(Event):
-    """市场数据事件的基类。
-
-    数据事件代表来自行情源的观测——K 线快照、逐笔成交、资金费率等。
-    每个数据事件携带一个 ``timestamp`` 字段，表示**数据在来源处生成的时间**。
-    引擎转发事件时不修改任何字段，因此 timestamp 始终是原始来源时间戳。
-
-    字段
-    ----
-    timestamp : int
-        数据时间点，纳秒整数时间戳。具体子类可以收窄类型。
-
-    示例
-    ----
-    ::
-
-        @dataclass(frozen=True, slots=True)
-        class BarEvent(DataEvent):
-            code: str
-            open: float
-            high: float
-            low: float
-            close: float
-            vol: int
-            amount: float
-
-        bar = BarEvent(
-            timestamp=1704153000_000_000_000,
-            code="000001.SZ",
-            open=10.0, high=10.5, low=9.8, close=10.2,
-            vol=1_000_000, amount=10_200_000.0,
-        )
-        bar.close = 11.0  # 立即抛出 FrozenInstanceError
-    """
-
-    timestamp: int
-
-
-@dataclass(frozen=True, slots=True)
-class LogicEvent(Event):
-    """策略逻辑事件的基类。
-
-    逻辑事件代表策略组件生成的决策——信号、委托指令、撤单、仓位调整等。
-    它们描述"应该发生什么"，而非"何时观测到数据"，因此本级不强制携带时间戳。
-
-    具体子类如需记录决策时间，可自行添加 timestamp 字段，但不作强制要求。
-
-    示例
-    ----
-    ::
-
-        @dataclass(frozen=True, slots=True)
-        class SignalEvent(LogicEvent):
-            code: str
-            direction: int    # +1 做多 / -1 做空 / 0 平仓
-            strength: float
-
-        @dataclass(frozen=True, slots=True)
-        class OrderEvent(LogicEvent):
-            code: str
-            quantity: int
-            price: float
-            side: str         # "buy" 或 "sell"
-    """
