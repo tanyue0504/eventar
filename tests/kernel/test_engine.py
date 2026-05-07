@@ -1,4 +1,4 @@
-"""针对 src/eventar/core/engine.py 的单元测试。"""
+"""针对 src/eventar/kernel/engine.py 的单元测试。"""
 from __future__ import annotations
 
 import dataclasses
