@@ -13,7 +13,7 @@
 """
 from __future__ import annotations
 
-from eventar.data.event import DataEvent
+from eventar.data import DataEvent
 
 from abc import ABC, abstractmethod
 from typing import Generator

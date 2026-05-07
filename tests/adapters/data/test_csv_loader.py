@@ -6,7 +6,7 @@ import textwrap
 import pandas as pd
 import pytest
 
-from eventar.adapters.data.csv_loader import CsvDataLoader
+from eventar.adapters.data import CsvDataLoader
 
 CSV_CONTENT = textwrap.dedent("""\
     timestamp,value

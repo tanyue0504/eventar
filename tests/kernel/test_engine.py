@@ -5,8 +5,7 @@ import dataclasses
 
 import pytest
 
-from eventar.kernel.engine import EventEngine
-from eventar.kernel.event import Event
+from eventar.kernel import Event, EventEngine
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

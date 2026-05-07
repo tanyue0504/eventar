@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass
 
-from eventar.kernel.event import Event
+from eventar.kernel import Event
 
 @dataclass(frozen=True, slots=True)
 class DataEvent(Event):

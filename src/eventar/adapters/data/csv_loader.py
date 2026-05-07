@@ -1,4 +1,4 @@
-from eventar.data.loader import DataLoader
+from eventar.data import DataLoader
 from pathlib import Path
 from typing import Iterator
 import pandas as pd

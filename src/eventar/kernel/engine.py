@@ -10,7 +10,7 @@
 
 from collections import deque
 from collections.abc import Callable
-from eventar.kernel.event import Event
+from eventar.kernel import Event
 
 EventListener = Callable[[Event], None]
 

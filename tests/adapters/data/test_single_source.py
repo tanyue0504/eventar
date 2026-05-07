@@ -16,10 +16,8 @@ from dataclasses import dataclass
 import pandas as pd
 import pytest
 
-from eventar.adapters.data.single_source import SingleDataEventSource
-from eventar.adapters.data.csv_loader import CsvDataLoader
-from eventar.adapters.data.parquet_loader import ParquetDataLoader
-from eventar.data.event import DataEvent
+from eventar.adapters.data import CsvDataLoader, ParquetDataLoader, SingleDataEventSource
+from eventar.data import DataEvent
 
 
 # ---------------------------------------------------------------------------

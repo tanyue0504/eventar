@@ -4,7 +4,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from eventar.adapters.data.parquet_loader import ParquetDataLoader
+from eventar.adapters.data import ParquetDataLoader
 
 
 @pytest.fixture()

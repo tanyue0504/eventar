@@ -4,9 +4,7 @@ from typing import Iterator
 
 import pandas as pd
 
-from eventar.data.loader import DataLoader
-from eventar.data.event import DataEvent
-from eventar.data.source import DataEventSource
+from eventar.data import DataEvent, DataEventSource, DataLoader
 
 class SingleDataEventSource(DataEventSource):
     """将 DataLoader 产出的 DataFrame 分块逐行转换为 DataEvent 实例。

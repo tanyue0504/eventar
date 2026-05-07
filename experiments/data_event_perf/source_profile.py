@@ -15,10 +15,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
 
-from eventar.adapters.data.parquet_loader import ParquetDataLoader
-from eventar.adapters.data.single_source import SingleDataEventSource
-from eventar.data.event import DataEvent
-from eventar.data.loader import DataLoader
+from eventar.adapters.data import ParquetDataLoader, SingleDataEventSource
+from eventar.data import DataEvent, DataLoader
 
 DATA_FILE = Path(__file__).resolve().parents[2] / "data" / "test" / "market_df_10000000.parquet"
 COLUMNS = [

@@ -7,9 +7,8 @@ BacktestEngine 编排完整的回测生命周期：
 """
 from __future__ import annotations
 
-from eventar.kernel.component import Component
-from eventar.data.source import DataEventSource
-from eventar.kernel.engine import EventEngine
+from eventar.data import DataEventSource
+from eventar.kernel import Component, EventEngine
 
 
 class BacktestEngine:

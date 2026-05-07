@@ -2,3 +2,7 @@
 
 包含回测引擎等回测特定的实现。
 """
+
+from eventar.backtest.engine import BacktestEngine
+
+__all__ = ["BacktestEngine"]

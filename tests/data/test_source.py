@@ -4,8 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterator
 
-from eventar.data.source import DataEventSource
-from eventar.data.event import DataEvent
+from eventar.data import DataEvent, DataEventSource
 
 
 @dataclass(frozen=True, slots=True)

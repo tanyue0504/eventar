@@ -1,4 +1,4 @@
-"""MergedDataEventSource 测试。
+"""MergedSource 测试。
 
 覆盖场景：
 - 单 source 等价于直接迭代
@@ -18,9 +18,8 @@ from typing import Iterator
 
 import pytest
 
-from eventar.data.source import DataEventSource
-from eventar.adapters.data.merged_source import MergedDataEventSource
-from eventar.data.event import DataEvent
+from eventar.adapters.data import MergedSource
+from eventar.data import DataEvent, DataEventSource
 
 
 # ---------------------------------------------------------------------------
@@ -55,13 +54,13 @@ def make_ticks(*timestamps: int) -> list[TickEvent]:
 def test_single_source_passthrough():
     """单 source 时，输出与原 source 完全一致。"""
     src = ListSource(make_ticks(1, 2, 3))
-    merged = MergedDataEventSource([src])
+    merged = MergedSource([src])
     assert [e.timestamp for e in merged] == [1, 2, 3]
 
 
 def test_single_source_empty():
     """单 source 为空时，输出为空。"""
-    merged = MergedDataEventSource([ListSource([])])
+    merged = MergedSource([ListSource([])])
     assert list(merged) == []
 
 
@@ -74,7 +73,7 @@ def test_two_sources_sorted():
     """两路各自有序，合并结果全局有序。"""
     a = ListSource(make_ticks(1, 3, 5))
     b = ListSource(make_ticks(2, 4, 6))
-    merged = MergedDataEventSource([a, b])
+    merged = MergedSource([a, b])
     assert [e.timestamp for e in merged] == [1, 2, 3, 4, 5, 6]
 
 
@@ -82,7 +81,7 @@ def test_two_sources_interleaved():
     """timestamp 完全交错，合并顺序仍正确。"""
     a = ListSource(make_ticks(1, 4, 7))
     b = ListSource(make_ticks(2, 3, 5, 6))
-    merged = MergedDataEventSource([a, b])
+    merged = MergedSource([a, b])
     assert [e.timestamp for e in merged] == [1, 2, 3, 4, 5, 6, 7]
 
 
@@ -90,13 +89,13 @@ def test_two_sources_one_empty():
     """其中一路为空，另一路完整输出。"""
     a = ListSource(make_ticks(1, 2, 3))
     b = ListSource([])
-    merged = MergedDataEventSource([a, b])
+    merged = MergedSource([a, b])
     assert [e.timestamp for e in merged] == [1, 2, 3]
 
 
 def test_all_sources_empty():
     """全部 source 为空时，输出为空。"""
-    merged = MergedDataEventSource([ListSource([]), ListSource([])])
+    merged = MergedSource([ListSource([]), ListSource([])])
     assert list(merged) == []
 
 
@@ -122,7 +121,7 @@ def test_tie_breaking_by_index():
     # source 0 和 source 1 都有 ts=10 的事件
     a = TagSource([TagEvent(10, "A"), TagEvent(20, "A")])
     b = TagSource([TagEvent(10, "B"), TagEvent(20, "B")])
-    merged = MergedDataEventSource([a, b])
+    merged = MergedSource([a, b])
     events = list(merged)
     assert [e.tag for e in events] == ["A", "B", "A", "B"]
 
@@ -133,10 +132,10 @@ def test_tie_breaking_by_index():
 
 
 def test_repeatable_iteration():
-    """同一 MergedDataEventSource 可多次迭代，结果一致。"""
+    """同一 MergedSource 可多次迭代，结果一致。"""
     a = ListSource(make_ticks(1, 3))
     b = ListSource(make_ticks(2, 4))
-    merged = MergedDataEventSource([a, b])
+    merged = MergedSource([a, b])
     first = [e.timestamp for e in merged]
     second = [e.timestamp for e in merged]
     assert first == second == [1, 2, 3, 4]
@@ -152,7 +151,7 @@ def test_locality_one_dominant_source():
     # source 0 在前 5 轮全部最小，触发短路径
     a = ListSource(make_ticks(1, 2, 3, 4, 5, 100))
     b = ListSource(make_ticks(10, 20))
-    merged = MergedDataEventSource([a, b])
+    merged = MergedSource([a, b])
     assert [e.timestamp for e in merged] == [1, 2, 3, 4, 5, 10, 20, 100]
 
 
@@ -160,7 +159,7 @@ def test_locality_alternating_dominance():
     """两路轮流主导，短路径频繁切换，顺序仍正确。"""
     a = ListSource(make_ticks(1, 3, 5, 7))
     b = ListSource(make_ticks(2, 4, 6, 8))
-    merged = MergedDataEventSource([a, b])
+    merged = MergedSource([a, b])
     assert [e.timestamp for e in merged] == [1, 2, 3, 4, 5, 6, 7, 8]
 
 
@@ -174,7 +173,7 @@ def test_three_sources():
     a = ListSource(make_ticks(1, 6))
     b = ListSource(make_ticks(2, 4))
     c = ListSource(make_ticks(3, 5))
-    merged = MergedDataEventSource([a, b, c])
+    merged = MergedSource([a, b, c])
     assert [e.timestamp for e in merged] == [1, 2, 3, 4, 5, 6]
 
 
@@ -192,7 +191,7 @@ def test_three_sources_tie_breaking():
         def __iter__(self):
             yield from self._events
 
-    merged = MergedDataEventSource([
+    merged = MergedSource([
         IdSource(0, [5]),
         IdSource(1, [5]),
         IdSource(2, [5]),

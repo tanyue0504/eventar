@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import heapq
 from typing import Iterator
-from eventar.data.event import DataEvent
-from eventar.data.source import DataEventSource
+from eventar.data import DataEvent, DataEventSource
 
-class MergedDataEventSource(DataEventSource):
+class MergedSource(DataEventSource):
     """多个 DataEventSource 按 timestamp 升序合并的迭代器。
 
     使用最小堆实现多路归并：
@@ -66,3 +65,7 @@ class MergedDataEventSource(DataEventSource):
                     # source i 不再是最小值，将 nev 入堆后回到外层循环。
                     heapq.heappush(heap, (nev.timestamp, i, nev))
                     break
+
+
+# backward compatibility alias
+MergedDataEventSource = MergedSource

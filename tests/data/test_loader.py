@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from eventar.data.loader import DataLoader
+from eventar.data import DataLoader
 
 
 def test_data_loader_generator_subclass_iterable():
