@@ -1,7 +1,7 @@
 
 from dataclasses import dataclass
 
-from eventar.kernel import Event
+from eventar.kernel.event import Event
 
 @dataclass(frozen=True, slots=True)
 class DataEvent(Event):
@@ -40,3 +40,7 @@ class DataEvent(Event):
     """
 
     timestamp: int
+
+@dataclass(frozen=True, slots=True)
+class TimerEvent(DataEvent):
+    pass

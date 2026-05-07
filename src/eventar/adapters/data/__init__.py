@@ -7,6 +7,7 @@ from eventar.adapters.data.csv_loader import CsvDataLoader
 from eventar.adapters.data.merged_source import MergedDataEventSource, MergedSource
 from eventar.adapters.data.parquet_loader import ParquetDataLoader
 from eventar.adapters.data.single_source import SingleDataEventSource
+from eventar.adapters.data.timer_source import TimerSource
 
 __all__ = [
 	"CsvDataLoader",
@@ -14,4 +15,5 @@ __all__ = [
 	"MergedDataEventSource",
 	"ParquetDataLoader",
 	"SingleDataEventSource",
+	"TimerSource",
 ]

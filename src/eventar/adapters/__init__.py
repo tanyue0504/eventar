@@ -8,6 +8,7 @@ from eventar.adapters.data import (
 	MergedSource,
 	ParquetDataLoader,
 	SingleDataEventSource,
+	TimerSource,
 )
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
 	"MergedSource",
 	"ParquetDataLoader",
 	"SingleDataEventSource",
+	"TimerSource",
 ]

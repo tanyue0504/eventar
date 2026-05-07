@@ -4,5 +4,6 @@
 """
 
 from eventar.backtest.engine import BacktestEngine
+from eventar.backtest.guards import MonotonicTimeGuard
 
-__all__ = ["BacktestEngine"]
+__all__ = ["BacktestEngine", "MonotonicTimeGuard"]

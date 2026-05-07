@@ -52,10 +52,10 @@ class TrackingComponent(Component):
 
     def start(self) -> None:
         self.calls.append("start")
-        self._engine.register_for(TickEvent, self._on_tick)
+        self.engine.register_for(TickEvent, self._on_tick)
 
     def stop(self) -> None:
-        self._engine.unregister_for(TickEvent, self._on_tick)
+        self.engine.unregister_for(TickEvent, self._on_tick)
         self.calls.append("stop")
 
     def _on_tick(self, event: DataEvent) -> None:

@@ -1,14 +1,14 @@
 """组件抽象基类。
 
 所有有状态的可插拔模块（数据源、策略、风控、执行通道等）均应继承 Component。
-组件持有 EventEngine 引用（self._engine），子类在 start/stop 中自行调用引擎接口。
+组件持有 EventEngine 引用（self.engine），子类在 start/stop 中自行调用引擎接口。
 生命周期由框架调用 start / stop 管理，子类必须实现这两个方法。
 """
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from eventar.kernel import EventEngine
+from eventar.kernel.engine import EventEngine
 
 
 class Component(ABC):
@@ -25,7 +25,7 @@ class Component(ABC):
     """
 
     def __init__(self, engine: EventEngine) -> None:
-        self._engine = engine
+        self.engine = engine
 
     # ------------------------------------------------------------------
     # 生命周期（子类必须实现）

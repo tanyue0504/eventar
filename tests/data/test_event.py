@@ -5,7 +5,7 @@ import dataclasses
 
 import pytest
 
-from eventar.data import DataEvent
+from eventar.data import DataEvent, TimerEvent
 from eventar.kernel import Event
 
 
@@ -98,3 +98,19 @@ def test_usable_as_set_element():
     b = BarEvent(timestamp=1, code="A", close=1.0)
     c = BarEvent(timestamp=2, code="B", close=2.0)
     assert len({a, b, c}) == 2
+
+
+def test_timer_event_is_data_event():
+    e = TimerEvent(timestamp=123)
+    assert isinstance(e, DataEvent)
+
+
+def test_timer_event_timestamp_readable():
+    e = TimerEvent(timestamp=321)
+    assert e.timestamp == 321
+
+
+def test_timer_event_is_frozen():
+    e = TimerEvent(timestamp=1)
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        e.timestamp = 2  # type: ignore[misc]
