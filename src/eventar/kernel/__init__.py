@@ -4,7 +4,7 @@
 """
 
 from eventar.kernel.event import Event
-from eventar.kernel.engine import EventEngine, EventListener
+from eventar.kernel.engine import EventEngine, EventListener, Phase
 from eventar.kernel.component import Component
 
-__all__ = ["Component", "Event", "EventEngine", "EventListener"]
+__all__ = ["Component", "Event", "EventEngine", "EventListener", "Phase"]
