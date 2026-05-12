@@ -19,7 +19,7 @@ import pytest
 
 from eventar.backtest.guards import MonotonicTimeGuard
 from eventar.data import DataEvent
-from eventar.kernel import Event, EventEngine
+from eventar.kernel import Event, EventEngine, Phase
 
 
 # ---------------------------------------------------------------------------
@@ -54,7 +54,7 @@ def test_start_registers_global_pre():
     engine = EventEngine()
     guard = MonotonicTimeGuard(engine)
     guard.start()
-    assert guard.on_event in engine._global_pre_listeners
+    assert guard.on_dataevent in engine._listeners[Phase.PRE].get(DataEvent, [])
 
 
 def test_stop_unregisters_global_pre():
@@ -62,7 +62,7 @@ def test_stop_unregisters_global_pre():
     guard = MonotonicTimeGuard(engine)
     guard.start()
     guard.stop()
-    assert guard.on_event not in engine._global_pre_listeners
+    assert guard.on_dataevent not in engine._listeners[Phase.PRE].get(DataEvent, [])
 
 
 # ---------------------------------------------------------------------------
@@ -74,7 +74,7 @@ def test_first_event_sets_cache():
     engine = EventEngine()
     guard = MonotonicTimeGuard(engine)
     e = Tick(timestamp=10)
-    guard.on_event(e)
+    guard.on_dataevent(e)
     assert guard.cache_event is e
 
 
@@ -82,22 +82,22 @@ def test_monotonic_timestamps_no_error():
     engine = EventEngine()
     guard = MonotonicTimeGuard(engine)
     for ts in [1, 2, 5, 10, 100]:
-        guard.on_event(Tick(timestamp=ts))  # 不应抛出
+        guard.on_dataevent(Tick(timestamp=ts))  # 不应抛出
 
 
 def test_equal_timestamps_no_error():
     engine = EventEngine()
     guard = MonotonicTimeGuard(engine)
-    guard.on_event(Tick(timestamp=5))
-    guard.on_event(Tick(timestamp=5))  # 相等不算回溯
+    guard.on_dataevent(Tick(timestamp=5))
+    guard.on_dataevent(Tick(timestamp=5))  # 相等不算回溯
 
 
 def test_backwards_timestamp_raises():
     engine = EventEngine()
     guard = MonotonicTimeGuard(engine)
-    guard.on_event(Tick(timestamp=10))
+    guard.on_dataevent(Tick(timestamp=10))
     with pytest.raises(RuntimeError):
-        guard.on_event(Tick(timestamp=9))
+        guard.on_dataevent(Tick(timestamp=9))
 
 
 def test_error_message_mentions_events():
@@ -105,18 +105,21 @@ def test_error_message_mentions_events():
     guard = MonotonicTimeGuard(engine)
     first = Tick(timestamp=10)
     second = Tick(timestamp=5)
-    guard.on_event(first)
+    guard.on_dataevent(first)
     with pytest.raises(RuntimeError, match="时光回溯"):
-        guard.on_event(second)
+        guard.on_dataevent(second)
 
 
-def test_non_data_event_after_first_does_not_update_cache():
-    """非 DataEvent 不更新缓存，后续 DataEvent 仍与原缓存比较。"""
+def test_non_data_event_after_first_is_ignored_in_engine_routing():
+    """非 DataEvent 不会路由到守卫，缓存保持不变。"""
     engine = EventEngine()
     guard = MonotonicTimeGuard(engine)
+    guard.start()
+
     first = Tick(timestamp=10)
-    guard.on_event(first)
-    guard.on_event(Signal(value=99))  # 非 DataEvent，不更新缓存
+    engine.push(first)
+    engine.push(Signal(value=99))
+
     assert guard.cache_event is first
 
 
@@ -124,9 +127,10 @@ def test_non_data_event_as_first_event_is_ignored():
     """首个非 DataEvent 不应写入缓存，避免后续比较时报错。"""
     engine = EventEngine()
     guard = MonotonicTimeGuard(engine)
-    guard.on_event(Signal(value=1))
+    guard.start()
+    engine.push(Signal(value=1))
     assert guard.cache_event is None
-    guard.on_event(Tick(timestamp=10))
+    engine.push(Tick(timestamp=10))
     assert guard.cache_event == Tick(timestamp=10)
 
 

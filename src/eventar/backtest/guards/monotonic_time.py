@@ -1,26 +1,23 @@
 from eventar.kernel.component import Component
-from eventar.kernel.engine import EventEngine
-from eventar.kernel.event import Event
+from eventar.kernel.engine import EventEngine, Phase
 from eventar.data import DataEvent
 
 class MonotonicTimeGuard(Component):
     """时间守卫组件。
     
-    监听 TimerEvent，根据事件时间戳控制回测引擎的运行状态。
+    监听 DataEvent，根据事件时间戳控制回测引擎的运行状态。
     """
     def __init__(self, engine: EventEngine) -> None:
         super().__init__(engine)
         self.cache_event: DataEvent | None = None
 
     def start(self) -> None:
-        self.engine.register_global_pre(self.on_event)
+        self.engine.register(DataEvent, self.on_dataevent, Phase.PRE)
 
     def stop(self) -> None:
-        self.engine.unregister_global_pre(self.on_event)
+        self.engine.unregister(DataEvent, self.on_dataevent, Phase.PRE)
 
-    def on_event(self, event: Event) -> None:
-        if not isinstance(event, DataEvent):
-            return
+    def on_dataevent(self, event: DataEvent) -> None:
         if self.cache_event is None:
             self.cache_event = event
             return
