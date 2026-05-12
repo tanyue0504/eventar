@@ -18,6 +18,7 @@ import pytest
 
 from eventar.adapters.data import CsvDataLoader, ParquetDataLoader, SingleDataEventSource
 from eventar.data import DataEvent
+from eventar.kernel import EventEngine
 
 
 # ---------------------------------------------------------------------------
@@ -221,6 +222,24 @@ def test_source_multi_chunk_order(csv_file):
     )
     timestamps = [e.timestamp for e in source]
     assert timestamps == [1, 2, 3, 4, 5]
+
+
+def test_single_source_events_route_to_dataevent_listener(csv_file):
+    """SingleDataEventSource 产出的事件应能被 DataEvent 监听器接收。"""
+    source = SingleDataEventSource(
+        CsvDataLoader(csv_file),
+        ["timestamp", "value"],
+        PriceEvent,
+    )
+    engine = EventEngine()
+    seen: list[float] = []
+
+    engine.register(DataEvent, lambda e: seen.append(getattr(e, "value")))
+
+    for event in source:
+        engine.push(event)
+
+    assert seen == [10.0, 20.0, 30.0, 40.0, 50.0]
 
 
 if __name__ == "__main__":
