@@ -6,7 +6,7 @@ import dataclasses
 import pytest
 
 from eventar.data import DataEvent, TimerEvent
-from eventar.kernel import Event
+from eventar.kernel import Event, EventEngine, Phase
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -114,3 +114,28 @@ def test_timer_event_is_frozen():
     e = TimerEvent(timestamp=1)
     with pytest.raises(dataclasses.FrozenInstanceError):
         e.timestamp = 2  # type: ignore[misc]
+
+
+def test_dataevent_listener_receives_timer_event_via_mro_routing():
+    """注册在 DataEvent 的监听器应能接收其子类 TimerEvent。"""
+    engine = EventEngine()
+    seen: list[int] = []
+
+    engine.register(DataEvent, lambda e: seen.append(e.timestamp))
+    engine.push(TimerEvent(timestamp=42))
+
+    assert seen == [42]
+
+
+def test_dataevent_phase_order_pre_main_post():
+    """DataEvent 在新引擎中应遵循 PRE -> MAIN -> POST 顺序。"""
+    engine = EventEngine()
+    seen: list[str] = []
+
+    engine.register(DataEvent, lambda e: seen.append("main"), Phase.MAIN)
+    engine.register(DataEvent, lambda e: seen.append("post"), Phase.POST)
+    engine.register(DataEvent, lambda e: seen.append("pre"), Phase.PRE)
+
+    engine.push(BarEvent(timestamp=1, code="000001.SZ", close=10.0))
+
+    assert seen == ["pre", "main", "post"]
