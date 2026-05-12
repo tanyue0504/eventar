@@ -2,14 +2,14 @@
 
 覆盖场景：
 - TimeGuard 是 Component 的子类
-- start 将 on_event 注册为全局优先监听器
-- stop 将 on_event 从全局优先监听器中移除
+- start 将 on_dataevent 注册到 PRE 阶段的 DataEvent 路由
+- stop 将 on_dataevent 从 PRE 阶段路由中移除
 - 第一个事件始终通过（写入缓存）
 - 时间戳单调递增时不报错
 - 时间戳相等时不报错（仅严格回溯才报错）
 - 时间戳回溯时抛出 RuntimeError
 - stop 后不再响应新事件
-- 非 DataEvent 事件在首个事件后不更新缓存，但不报错
+- 非 DataEvent 事件不会被路由到守卫
 """
 from __future__ import annotations
 
@@ -66,48 +66,53 @@ def test_stop_unregisters_global_pre():
 
 
 # ---------------------------------------------------------------------------
-# on_event 行为
+# 通过 engine.push 验证守卫行为
 # ---------------------------------------------------------------------------
 
 
 def test_first_event_sets_cache():
     engine = EventEngine()
     guard = MonotonicTimeGuard(engine)
+    guard.start()
     e = Tick(timestamp=10)
-    guard.on_dataevent(e)
+    engine.push(e)
     assert guard.cache_event is e
 
 
 def test_monotonic_timestamps_no_error():
     engine = EventEngine()
     guard = MonotonicTimeGuard(engine)
+    guard.start()
     for ts in [1, 2, 5, 10, 100]:
-        guard.on_dataevent(Tick(timestamp=ts))  # 不应抛出
+        engine.push(Tick(timestamp=ts))  # 不应抛出
 
 
 def test_equal_timestamps_no_error():
     engine = EventEngine()
     guard = MonotonicTimeGuard(engine)
-    guard.on_dataevent(Tick(timestamp=5))
-    guard.on_dataevent(Tick(timestamp=5))  # 相等不算回溯
+    guard.start()
+    engine.push(Tick(timestamp=5))
+    engine.push(Tick(timestamp=5))  # 相等不算回溯
 
 
 def test_backwards_timestamp_raises():
     engine = EventEngine()
     guard = MonotonicTimeGuard(engine)
-    guard.on_dataevent(Tick(timestamp=10))
+    guard.start()
+    engine.push(Tick(timestamp=10))
     with pytest.raises(RuntimeError):
-        guard.on_dataevent(Tick(timestamp=9))
+        engine.push(Tick(timestamp=9))
 
 
 def test_error_message_mentions_events():
     engine = EventEngine()
     guard = MonotonicTimeGuard(engine)
+    guard.start()
     first = Tick(timestamp=10)
     second = Tick(timestamp=5)
-    guard.on_dataevent(first)
+    engine.push(first)
     with pytest.raises(RuntimeError, match="时光回溯"):
-        guard.on_dataevent(second)
+        engine.push(second)
 
 
 def test_non_data_event_after_first_is_ignored_in_engine_routing():
